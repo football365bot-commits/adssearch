@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Комната — масштабирование</title>
+    <title>Комната — масштабирование (исправлено)</title>
     <style>
         body { margin: 0; overflow: hidden; background: #111; }
         canvas { display: block; width: 100%; height: 100%; }
@@ -43,7 +43,7 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // ----- РАЗМЕРЫ КОМНАТЫ (фиксированы) -----
+        // ----- РАЗМЕРЫ КОМНАТЫ -----
         const ROOM_W = 8;
         const ROOM_D = 5;
         const ROOM_H = 4;
@@ -52,9 +52,9 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1a1a2e);
 
-        // ----- КАМЕРА (перспективная, фиксированная) -----
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 20);
-        camera.position.set(0, 0, 12);
+        // ----- КАМЕРА (фиксированная, перспективная) -----
+        const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 20);
+        camera.position.set(0, 0, 8);
         camera.lookAt(0, 0, 0);
 
         // ----- РЕНДЕРЕР -----
@@ -65,20 +65,22 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        // ----- СВЕТ -----
+        // ----- СВЕТ (создаёт объём) -----
         const ambient = new THREE.AmbientLight(0x404060, 0.5);
         scene.add(ambient);
+
         const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
         dirLight.position.set(3, 6, 4);
         dirLight.castShadow = true;
         dirLight.shadow.mapSize.width = 1024;
         dirLight.shadow.mapSize.height = 1024;
         scene.add(dirLight);
+
         const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
         fillLight.position.set(-2, 1, 5);
         scene.add(fillLight);
 
-        // ----- ГРУППА КОМНАТЫ (всё, что внутри) -----
+        // ----- ГРУППА КОМНАТЫ (всё внутри) -----
         const roomGroup = new THREE.Group();
         scene.add(roomGroup);
 
@@ -143,22 +145,19 @@
         let baseScale = 1;
         let zoomFactor = 1;
         let offsetX = 0, offsetY = 0;
-        const minZoom = 0.5;
+        const minZoom = 0.4;
         const maxZoom = 2.0;
 
         function fitRoom() {
             const aspect = window.innerWidth / window.innerHeight;
-            // Вычисляем видимую ширину и высоту в мировых координатах
             const fovRad = THREE.MathUtils.degToRad(camera.fov);
             const visibleHeight = 2 * camera.position.z * Math.tan(fovRad / 2);
             const visibleWidth = visibleHeight * aspect;
 
-            // Масштаб, чтобы комната влезала по ширине и высоте
             const scaleX = visibleWidth / ROOM_W;
             const scaleY = visibleHeight / ROOM_H;
-            baseScale = Math.min(scaleX, scaleY);
+            baseScale = Math.min(scaleX, scaleY) * 0.95; // небольшой запас
 
-            // Применяем масштаб и смещение
             applyTransform();
         }
 
@@ -192,11 +191,10 @@
             if (!isDragging) return;
             const dx = e.clientX - prevPointer.x;
             const dy = e.clientY - prevPointer.y;
-            // Скорость панорамирования зависит от текущего масштаба
             const speed = 0.005 / (baseScale * zoomFactor);
             offsetX += dx * speed;
             offsetY -= dy * speed;
-            // Ограничения, чтобы стены не выходили за экран
+            // Ограничения (чтобы стены не уходили за экран)
             const halfW = (ROOM_W / 2) - 0.3;
             const halfH = (ROOM_H / 2) - 0.2;
             offsetX = Math.min(halfW, Math.max(-halfW, offsetX));
@@ -213,11 +211,10 @@
             e.preventDefault();
             const delta = e.deltaY > 0 ? -0.05 : 0.05;
             zoomFactor = Math.min(maxZoom, Math.max(minZoom, zoomFactor + delta));
-            // При зуме ограничения панорамирования пересчитываются автоматически в applyTransform
             applyTransform();
         }, { passive: false });
 
-        // Пинч для мобильных
+        // Пинч
         let lastTouchDist = 0;
         renderer.domElement.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
