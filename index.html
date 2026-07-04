@@ -135,7 +135,6 @@
         }
         .panel-close:active { transform: scale(0.9); }
 
-        /* Кнопка рейда */
         .raid-btn {
             background: #6cf;
             border: none;
@@ -258,7 +257,7 @@
         }
         #control-panel .close-btn:active { background: rgba(255, 70, 70, 0.3); }
 
-        /* ---------- TOAST (всплывающее уведомление) ---------- */
+        /* ---------- TOAST ---------- */
         #toast {
             position: fixed;
             bottom: 270px;
@@ -359,7 +358,6 @@
 
     <div id="toast"></div>
 
-    <!-- Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -372,25 +370,20 @@
         // ----- ИМПОРТЫ -----
         import * as THREE from 'three';
 
-        // ----- СЦЕНА И КАМЕРА (адаптивная) -----
+        // ----- СЦЕНА И КАМЕРА (фиксированная позиция, зум через FOV) -----
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x12121a);
 
-        // Адаптивный FOV и расстояние в зависимости от ширины экрана
+        // Базовый FOV в зависимости от экрана (комната всегда в кадре)
         const aspect = window.innerWidth / window.innerHeight;
-        let fov = 45;
-        let distance = 4.8;
-        if (aspect < 0.8) { // вертикальный телефон
-            fov = 50;
-            distance = 5.2;
-        } else if (aspect > 1.6) { // широкий экран
-            fov = 40;
-            distance = 4.0;
-        }
+        let baseFov = 45;
+        if (aspect < 0.8) baseFov = 50;
+        else if (aspect > 1.6) baseFov = 40;
 
-        const camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 20);
-        camera.position.set(0, 1.6, distance);
+        // Камера фиксирована: стоит на месте и смотрит в центр комнаты
+        const camera = new THREE.PerspectiveCamera(baseFov, aspect, 0.1, 20);
+        camera.position.set(0, 1.6, 4.8);
         camera.lookAt(0, 1.2, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -400,7 +393,48 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
 
-        // --- СВЕТ ---
+        // ----- ЗУМ (изменение FOV) -----
+        let currentFov = baseFov;
+        const minFov = 20;   // максимальное приближение
+        const maxFov = 70;   // максимальное отдаление
+
+        function updateZoom() {
+            camera.fov = currentFov;
+            camera.updateProjectionMatrix();
+        }
+
+        // Колёсико мыши
+        renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            currentFov += e.deltaY * 0.05;
+            currentFov = Math.min(maxFov, Math.max(minFov, currentFov));
+            updateZoom();
+        }, { passive: false });
+
+        // Пинч (два пальца)
+        let lastTouchDist = 0;
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                lastTouchDist = Math.sqrt(dx*dx + dy*dy);
+            }
+        }, { passive: true });
+
+        renderer.domElement.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const delta = (lastTouchDist - dist) * 0.2;
+                currentFov += delta;
+                currentFov = Math.min(maxFov, Math.max(minFov, currentFov));
+                lastTouchDist = dist;
+                updateZoom();
+            }
+        }, { passive: true });
+
+        // ----- СВЕТ -----
         const ambient = new THREE.AmbientLight(0x404060, 0.6);
         scene.add(ambient);
 
@@ -419,7 +453,7 @@
         point.position.set(0, 2.5, 2);
         scene.add(point);
 
-        // --- КОМНАТА ---
+        // ----- КОМНАТА -----
         const roomW = 5, roomH = 3, roomD = 4;
         const wallMat = new THREE.MeshStandardMaterial({ color: 0xe8e8f0, roughness: 0.6 });
         const floorMat = new THREE.MeshStandardMaterial({ color: 0x8a9ba8, roughness: 0.8 });
@@ -462,9 +496,10 @@
         }
         scene.add(createWindow());
 
-        // --- ПЕРСОНАЖ ---
+        // ----- ПЕРСОНАЖ -----
         const character = new THREE.Group();
         character.position.set(0, 0, 0.2);
+
         function buildChar() {
             const g = new THREE.Group();
             const skin = new THREE.MeshStandardMaterial({ color: 0xf7d6a8, roughness: 0.4 });
@@ -508,7 +543,7 @@
         character.add(buildChar());
         scene.add(character);
 
-        // --- МЕБЕЛЬ ---
+        // ----- МЕБЕЛЬ -----
         const furniture = [];
 
         function addFurniture(mesh) {
@@ -580,44 +615,7 @@
         const tv1 = createTV(); tv1.position.set(-1.5, 0, -1.5); tv1.rotation.y = 0.4; addFurniture(tv1);
         const chair2 = createChair(); chair2.position.set(1.6, 0, 1.0); chair2.rotation.y = -0.5; addFurniture(chair2);
 
-        // --- УПРАВЛЕНИЕ: ЗУМ ---
-        let zoom = distance;
-        const minZoom = 2.2;
-        const maxZoom = 7.0;
-
-        function updateZoom() {
-            camera.position.z = zoom;
-            camera.lookAt(0, 1.2, 0);
-        }
-        renderer.domElement.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            zoom += e.deltaY * 0.005;
-            zoom = Math.min(maxZoom, Math.max(minZoom, zoom));
-            updateZoom();
-        }, { passive: false });
-
-        let lastDist = 0;
-        renderer.domElement.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2) {
-                const dx = e.touches[0].clientX - e.touches[1].clientX;
-                const dy = e.touches[0].clientY - e.touches[1].clientY;
-                lastDist = Math.sqrt(dx*dx + dy*dy);
-            }
-        }, { passive: true });
-        renderer.domElement.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 2) {
-                const dx = e.touches[0].clientX - e.touches[1].clientX;
-                const dy = e.touches[0].clientY - e.touches[1].clientY;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                const delta = (lastDist - dist) * 0.02;
-                zoom += delta;
-                zoom = Math.min(maxZoom, Math.max(minZoom, zoom));
-                lastDist = dist;
-                updateZoom();
-            }
-        }, { passive: true });
-
-        // --- ВРАЩЕНИЕ ПЕРСОНАЖА (перетаскивание по нему) ---
+        // ----- ВРАЩЕНИЕ ПЕРСОНАЖА (перетаскивание по нему) -----
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
         let isDragging = false;
@@ -666,7 +664,7 @@
             }
         }, { passive: true });
 
-        // --- ВЫДЕЛЕНИЕ ПРЕДМЕТОВ ---
+        // ----- ВЫДЕЛЕНИЕ ПРЕДМЕТОВ -----
         function getIntersectedItem(event) {
             const rect = renderer.domElement.getBoundingClientRect();
             const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -684,7 +682,7 @@
             return null;
         }
 
-        // --- UI ЛОГИКА ---
+        // ----- UI ЛОГИКА -----
         let selected = null;
         let mode = 'move';
         const contextMenu = document.getElementById('context-menu');
@@ -782,7 +780,7 @@
             selectItem(selected);
         });
 
-        // --- РЕЙД (эмуляция) ---
+        // ----- РЕЙД (эмуляция) -----
         const raidBtn = document.getElementById('raid-start-btn');
         const raidStatus = document.getElementById('raid-status');
         const raidResult = document.getElementById('raid-result');
@@ -820,7 +818,7 @@
             }
         });
 
-        // --- МЕНЮ (переключение панелей) ---
+        // ----- МЕНЮ (переключение панелей) -----
         const overlays = {
             raid: document.getElementById('raid-overlay'),
             inventory: document.getElementById('inventory-overlay'),
@@ -849,7 +847,7 @@
             });
         });
 
-        // --- АДАПТАЦИЯ К РАЗМЕРУ ЭКРАНА ---
+        // ----- АДАПТАЦИЯ К РАЗМЕРУ ЭКРАНА -----
         window.addEventListener('resize', () => {
             const w = window.innerWidth;
             const h = window.innerHeight;
@@ -858,14 +856,14 @@
             renderer.setSize(w, h);
         });
 
-        // --- АНИМАЦИЯ ---
+        // ----- АНИМАЦИЯ -----
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
         }
         animate();
 
-        console.log('GeoCollector — финальная версия загружена.');
+        console.log('GeoCollector — финальная версия с зумом через FOV загружена.');
     </script>
 </body>
 </html>
