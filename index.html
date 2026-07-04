@@ -6,7 +6,7 @@
     <title>GeoCollector</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        body { background: #0a0a12; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; overflow: hidden; }
+        body { background: #0a0a12; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
 
         #canvas-container {
             position: fixed;
@@ -22,7 +22,6 @@
             height: 100%;
         }
 
-        /* ---------- МЕНЮ ---------- */
         #bottom-menu {
             position: fixed;
             bottom: 0;
@@ -54,16 +53,10 @@
             font-family: inherit;
             min-width: 48px;
         }
-        .menu-btn .icon {
-            font-size: 24px;
-            line-height: 1.2;
-        }
-        .menu-btn.active {
-            color: #6cf;
-        }
+        .menu-btn .icon { font-size: 24px; line-height: 1.2; }
+        .menu-btn.active { color: #6cf; }
         .menu-btn:active { transform: scale(0.92); }
 
-        /* Горизонтальная ориентация — меню слева */
         @media (orientation: landscape) and (min-width: 600px) {
             #bottom-menu {
                 flex-direction: column;
@@ -76,7 +69,6 @@
                 border-top: none;
                 border-right: 1px solid rgba(255, 255, 255, 0.06);
                 background: rgba(12, 12, 20, 0.9);
-                backdrop-filter: blur(12px);
                 justify-content: center;
                 gap: 16px;
             }
@@ -91,7 +83,6 @@
             #bottom-menu .menu-btn span:last-child { display: none; }
         }
 
-        /* ---------- ПАНЕЛИ (оверлеи) ---------- */
         .overlay {
             position: fixed;
             top: 0; left: 0;
@@ -117,13 +108,7 @@
             box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
-        .panel h2 {
-            font-weight: 500;
-            font-size: 22px;
-            margin-bottom: 18px;
-            text-align: center;
-            letter-spacing: 0.3px;
-        }
+        .panel h2 { font-weight: 500; font-size: 22px; margin-bottom: 18px; text-align: center; }
         .panel-close {
             float: right;
             background: none;
@@ -160,7 +145,6 @@
         .profile-row:last-child { border: none; }
         .profile-row span:last-child { color: #6cf; }
 
-        /* ---------- КОНТЕКСТНОЕ МЕНЮ ---------- */
         #context-menu {
             position: fixed;
             bottom: 100px;
@@ -197,7 +181,6 @@
         }
         #context-menu .menu-item:active { background: rgba(100, 200, 255, 0.25); transform: scale(0.95); }
 
-        /* ---------- ПАНЕЛЬ УПРАВЛЕНИЯ ПРЕДМЕТОМ ---------- */
         #control-panel {
             position: fixed;
             bottom: 180px;
@@ -216,18 +199,8 @@
             min-width: 200px;
             box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
         }
-        #control-panel .title {
-            color: #888;
-            font-size: 13px;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-        }
-        #control-panel .arrow-row {
-            display: flex;
-            gap: 14px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+        #control-panel .title { color: #888; font-size: 13px; margin-bottom: 2px; }
+        #control-panel .arrow-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
         #control-panel .arrow-btn {
             background: rgba(255, 255, 255, 0.06);
             border: none;
@@ -257,7 +230,6 @@
         }
         #control-panel .close-btn:active { background: rgba(255, 70, 70, 0.3); }
 
-        /* ---------- TOAST ---------- */
         #toast {
             position: fixed;
             bottom: 270px;
@@ -284,7 +256,6 @@
 
     <div id="canvas-container"></div>
 
-    <!-- Меню -->
     <div id="bottom-menu">
         <button class="menu-btn active" data-tab="room"><span class="icon">🏠</span><span>Комната</span></button>
         <button class="menu-btn" data-tab="raid"><span class="icon">📍</span><span>Рейд</span></button>
@@ -293,7 +264,6 @@
         <button class="menu-btn" data-tab="profile"><span class="icon">👤</span><span>Профиль</span></button>
     </div>
 
-    <!-- Панели -->
     <div id="raid-overlay" class="overlay">
         <div class="panel">
             <button class="panel-close" data-close="raid">✕</button>
@@ -334,7 +304,6 @@
         </div>
     </div>
 
-    <!-- Контекстное меню и панель управления -->
     <div id="context-menu">
         <button class="menu-item" data-action="move">✋ Переместить</button>
         <button class="menu-item" data-action="rotate">🔄 Вращать</button>
@@ -367,25 +336,24 @@
     </script>
 
     <script type="module">
-        // ----- ИМПОРТЫ -----
         import * as THREE from 'three';
 
-        // ----- СЦЕНА И КАМЕРА (фиксированная позиция, зум через FOV) -----
+        // ----- СЦЕНА -----
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x12121a);
 
-        // Базовый FOV в зависимости от экрана (комната всегда в кадре)
+        // ----- КАМЕРА (фиксирована) -----
         const aspect = window.innerWidth / window.innerHeight;
         let baseFov = 45;
         if (aspect < 0.8) baseFov = 50;
         else if (aspect > 1.6) baseFov = 40;
 
-        // Камера фиксирована: стоит на месте и смотрит в центр комнаты
         const camera = new THREE.PerspectiveCamera(baseFov, aspect, 0.1, 20);
         camera.position.set(0, 1.6, 4.8);
         camera.lookAt(0, 1.2, 0);
 
+        // ----- РЕНДЕРЕР -----
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -393,17 +361,16 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
 
-        // ----- ЗУМ (изменение FOV) -----
+        // ----- ЗУМ (FOV) -----
         let currentFov = baseFov;
-        const minFov = 20;   // максимальное приближение
-        const maxFov = 70;   // максимальное отдаление
+        const minFov = 20;
+        const maxFov = 70;
 
         function updateZoom() {
             camera.fov = currentFov;
             camera.updateProjectionMatrix();
         }
 
-        // Колёсико мыши
         renderer.domElement.addEventListener('wheel', (e) => {
             e.preventDefault();
             currentFov += e.deltaY * 0.05;
@@ -411,7 +378,6 @@
             updateZoom();
         }, { passive: false });
 
-        // Пинч (два пальца)
         let lastTouchDist = 0;
         renderer.domElement.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -615,7 +581,7 @@
         const tv1 = createTV(); tv1.position.set(-1.5, 0, -1.5); tv1.rotation.y = 0.4; addFurniture(tv1);
         const chair2 = createChair(); chair2.position.set(1.6, 0, 1.0); chair2.rotation.y = -0.5; addFurniture(chair2);
 
-        // ----- ВРАЩЕНИЕ ПЕРСОНАЖА (перетаскивание по нему) -----
+        // ----- ВРАЩЕНИЕ ПЕРСОНАЖА -----
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
         let isDragging = false;
@@ -642,7 +608,6 @@
                 prevX = e.clientX;
                 renderer.domElement.style.touchAction = 'none';
             } else {
-                // Выделение предмета
                 const hitItem = getIntersectedItem(e);
                 if (hitItem) selectItem(hitItem);
                 else selectItem(null);
@@ -682,7 +647,7 @@
             return null;
         }
 
-        // ----- UI ЛОГИКА -----
+        // ----- UI -----
         let selected = null;
         let mode = 'move';
         const contextMenu = document.getElementById('context-menu');
@@ -780,7 +745,7 @@
             selectItem(selected);
         });
 
-        // ----- РЕЙД (эмуляция) -----
+        // ----- РЕЙД -----
         const raidBtn = document.getElementById('raid-start-btn');
         const raidStatus = document.getElementById('raid-status');
         const raidResult = document.getElementById('raid-result');
@@ -818,7 +783,7 @@
             }
         });
 
-        // ----- МЕНЮ (переключение панелей) -----
+        // ----- МЕНЮ -----
         const overlays = {
             raid: document.getElementById('raid-overlay'),
             inventory: document.getElementById('inventory-overlay'),
@@ -847,7 +812,7 @@
             });
         });
 
-        // ----- АДАПТАЦИЯ К РАЗМЕРУ ЭКРАНА -----
+        // ----- АДАПТАЦИЯ -----
         window.addEventListener('resize', () => {
             const w = window.innerWidth;
             const h = window.innerHeight;
@@ -863,7 +828,7 @@
         }
         animate();
 
-        console.log('GeoCollector — финальная версия с зумом через FOV загружена.');
+        console.log('GeoCollector — финальная версия загружена.');
     </script>
 </body>
 </html>
