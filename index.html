@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Комната — только зум</title>
+    <title>Комната — настраиваемая</title>
     <style>
         body { margin: 0; overflow: hidden; background: #111; }
         canvas { display: block; }
@@ -22,17 +22,39 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // --- СЦЕНА ---
+        // ------------------------------------------------
+        //  НАСТРОЙКИ КОМНАТЫ (меняй здесь)
+        // ------------------------------------------------
+        const config = {
+            roomWidth: 7,           // Ширина комнаты (по горизонтали)
+            roomDepth: 5,           // Глубина (по оси Z)
+            roomHeight: 3.5,        // Высота (по оси Y)
+            cameraDistance: 6.5,    // Расстояние камеры от центра
+            cameraY: 1.8,           // Высота камеры (уровень глаз)
+            minFov: 25,             // Минимальный FOV (максимальное приближение)
+            maxFov: 60,             // Максимальный FOV (максимальное отдаление)
+            startFov: 40,           // Начальный FOV
+            wallColor: 0xe8e8f0,    // Цвет стен
+            floorColor: 0x8a9ba8,   // Цвет пола
+            ceilingColor: 0xccccd4, // Цвет потолка
+            windowColor: 0x88ccff,  // Цвет стекла окна
+        };
+
+        // ------------------------------------------------
+        //  СЦЕНА, КАМЕРА, РЕНДЕРЕР
+        // ------------------------------------------------
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1a1a2e);
 
-        // --- КАМЕРА (перспективная, фиксированная, без панорамирования) ---
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 20);
-        // Стоим на месте, смотрим в центр комнаты
-        camera.position.set(0, 1.5, 5.5);
-        camera.lookAt(0, 1.5, 0);
+        const camera = new THREE.PerspectiveCamera(
+            config.startFov,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            20
+        );
+        camera.position.set(0, config.cameraY, config.cameraDistance);
+        camera.lookAt(0, config.cameraY, 0);
 
-        // --- РЕНДЕРЕР ---
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -40,7 +62,9 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        // --- СВЕТ ---
+        // ------------------------------------------------
+        //  СВЕТ
+        // ------------------------------------------------
         const ambient = new THREE.AmbientLight(0x404060, 0.6);
         scene.add(ambient);
 
@@ -55,14 +79,14 @@
         fill.position.set(-2, 2, 4);
         scene.add(fill);
 
-        // --- КОМНАТА (размеры, чтобы заполнять экран) ---
-        const roomW = 5;
-        const roomD = 4;
-        const roomH = 3;
+        // ------------------------------------------------
+        //  КОМНАТА (с размерами из конфига)
+        // ------------------------------------------------
+        const { roomWidth, roomDepth, roomHeight } = config;
 
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0xe8e8f0, roughness: 0.6 });
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x8a9ba8, roughness: 0.8 });
-        const ceilMat = new THREE.MeshStandardMaterial({ color: 0xccccd4, roughness: 0.9 });
+        const wallMat = new THREE.MeshStandardMaterial({ color: config.wallColor, roughness: 0.6 });
+        const floorMat = new THREE.MeshStandardMaterial({ color: config.floorColor, roughness: 0.8 });
+        const ceilMat = new THREE.MeshStandardMaterial({ color: config.ceilingColor, roughness: 0.9 });
 
         function makeWall(w, h, d, px, py, pz, mat, rotY = 0) {
             const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -74,21 +98,23 @@
             return m;
         }
 
-        // Задняя, левая, правая стены
-        makeWall(roomW, roomH, 0.1, 0, roomH/2, -roomD/2, wallMat);
-        makeWall(0.1, roomH, roomD, -roomW/2, roomH/2, 0, wallMat);
-        makeWall(0.1, roomH, roomD, roomW/2, roomH/2, 0, wallMat);
+        // Задняя стена
+        makeWall(roomWidth, roomHeight, 0.1, 0, roomHeight/2, -roomDepth/2, wallMat);
+        // Левая стена
+        makeWall(0.1, roomHeight, roomDepth, -roomWidth/2, roomHeight/2, 0, wallMat);
+        // Правая стена
+        makeWall(0.1, roomHeight, roomDepth, roomWidth/2, roomHeight/2, 0, wallMat);
 
         // Пол
-        const floor = new THREE.Mesh(new THREE.BoxGeometry(roomW, 0.1, roomD), floorMat);
+        const floor = new THREE.Mesh(new THREE.BoxGeometry(roomWidth, 0.1, roomDepth), floorMat);
         floor.position.set(0, 0, 0);
         floor.receiveShadow = true;
         floor.castShadow = false;
         scene.add(floor);
 
         // Потолок
-        const ceil = new THREE.Mesh(new THREE.BoxGeometry(roomW, 0.1, roomD), ceilMat);
-        ceil.position.set(0, roomH, 0);
+        const ceil = new THREE.Mesh(new THREE.BoxGeometry(roomWidth, 0.1, roomDepth), ceilMat);
+        ceil.position.set(0, roomHeight, 0);
         ceil.castShadow = true;
         ceil.receiveShadow = true;
         scene.add(ceil);
@@ -97,26 +123,27 @@
         function createWindow() {
             const g = new THREE.Group();
             const fm = new THREE.MeshStandardMaterial({ color: 0x2a3a4a, roughness: 0.4, metalness: 0.7 });
-            const gm = new THREE.MeshStandardMaterial({ color: 0x88ccff, transparent: true, opacity: 0.3, roughness: 0.1, metalness: 0.2 });
-            const w = 1.8, h = 1.6;
-            const z = -roomD/2 + 0.06;
+            const gm = new THREE.MeshStandardMaterial({ color: config.windowColor, transparent: true, opacity: 0.3, roughness: 0.1, metalness: 0.2 });
+            const w = 2.2, h = 2.0;
+            const z = -roomDepth/2 + 0.06;
             const fg = new THREE.BoxGeometry(w, 0.06, 0.05);
-            const top = new THREE.Mesh(fg, fm); top.position.set(0, roomH/2 + 0.2, z); g.add(top);
-            const bot = new THREE.Mesh(fg, fm); bot.position.set(0, roomH/2 - 0.2 - h, z); g.add(bot);
+            const top = new THREE.Mesh(fg, fm); top.position.set(0, roomHeight/2 + 0.2, z); g.add(top);
+            const bot = new THREE.Mesh(fg, fm); bot.position.set(0, roomHeight/2 - 0.2 - h, z); g.add(bot);
             const lf = new THREE.Mesh(new THREE.BoxGeometry(0.06, h, 0.05), fm);
-            lf.position.set(-w/2, roomH/2 - 0.1, z); g.add(lf);
+            lf.position.set(-w/2, roomHeight/2 - 0.1, z); g.add(lf);
             const rf = new THREE.Mesh(new THREE.BoxGeometry(0.06, h, 0.05), fm);
-            rf.position.set(w/2, roomH/2 - 0.1, z); g.add(rf);
+            rf.position.set(w/2, roomHeight/2 - 0.1, z); g.add(rf);
             const gl = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.15, h - 0.15), gm);
-            gl.position.set(0, roomH/2 - 0.1, z + 0.01); g.add(gl);
+            gl.position.set(0, roomHeight/2 - 0.1, z + 0.01); g.add(gl);
             return g;
         }
         scene.add(createWindow());
 
-        // ---- УПРАВЛЕНИЕ: ТОЛЬКО ЗУМ (без панорамирования) ----
-        let currentFov = 45;
-        const minFov = 20;
-        const maxFov = 70;
+        // ------------------------------------------------
+        //  ЗУМ (FOV) с настраиваемыми пределами
+        // ------------------------------------------------
+        let currentFov = config.startFov;
+        const { minFov, maxFov } = config;
 
         function updateZoom() {
             camera.fov = currentFov;
@@ -153,7 +180,9 @@
             }
         }, { passive: true });
 
-        // --- АДАПТАЦИЯ ПРИ ИЗМЕНЕНИИ РАЗМЕРА ЭКРАНА ---
+        // ------------------------------------------------
+        //  АДАПТАЦИЯ ПРИ ИЗМЕНЕНИИ РАЗМЕРА ЭКРАНА
+        // ------------------------------------------------
         window.addEventListener('resize', () => {
             const w = window.innerWidth;
             const h = window.innerHeight;
@@ -162,14 +191,16 @@
             renderer.setSize(w, h);
         });
 
-        // --- АНИМАЦИЯ ---
+        // ------------------------------------------------
+        //  АНИМАЦИЯ
+        // ------------------------------------------------
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
         }
         animate();
 
-        console.log('✅ Комната загружена. Только зум, без панорамирования.');
+        console.log('✅ Комната загружена. Параметры:', config);
     </script>
 </body>
 </html>
