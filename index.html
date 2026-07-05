@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Настройка причёски — кнопки</title>
+    <title>Настройка предмета</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { background: #1a1a2e; font-family: -apple-system, sans-serif; overflow: hidden; color: #fff; }
@@ -12,48 +12,50 @@
         /* ---- Панель управления (справа) ---- */
         #ui-panel {
             position: fixed;
-            right: 16px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(20, 20, 30, 0.88);
+            background: rgba(20, 20, 30, 0.9);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 20px;
-            padding: 16px 14px;
+            padding: 14px 12px;
             z-index: 10;
             display: none;
             flex-direction: column;
-            gap: 6px;
-            min-width: 140px;
-            max-width: 180px;
+            gap: 8px;
+            min-width: 150px;
+            max-width: 170px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
         }
-        #ui-panel .title {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 500;
-            color: #aaa;
-            margin-bottom: 6px;
-            letter-spacing: 0.3px;
+        #ui-panel .section-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
         }
+        #ui-panel .section-title:first-of-type { margin-top: 0; }
         .param-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 4px;
+            gap: 2px;
             font-size: 12px;
             color: #aaa;
         }
         .param-row .label {
-            width: 28px;
+            width: 18px;
             flex-shrink: 0;
             font-weight: 400;
             color: #888;
+            font-size: 11px;
         }
         .param-row .ctrl {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
         }
         .param-row .ctrl button {
             width: 24px;
@@ -62,7 +64,7 @@
             border: none;
             background: rgba(255, 255, 255, 0.06);
             color: #fff;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 300;
             cursor: pointer;
             transition: 0.15s;
@@ -72,13 +74,13 @@
             touch-action: manipulation;
         }
         .param-row .ctrl button:active {
-            background: rgba(100, 200, 255, 0.25);
+            background: rgba(100, 200, 255, 0.2);
             transform: scale(0.92);
         }
         .param-row .value {
-            width: 42px;
+            width: 38px;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: #fff;
             font-variant-numeric: tabular-nums;
         }
@@ -89,19 +91,19 @@
             display: flex;
             gap: 6px;
             justify-content: center;
-            margin-top: 8px;
+            margin-top: 6px;
         }
         .btn-group button {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.06);
             color: #ccc;
-            padding: 4px 14px;
+            padding: 4px 12px;
             border-radius: 30px;
-            font-size: 12px;
+            font-size: 11px;
             cursor: pointer;
             transition: 0.2s;
         }
-        .btn-group button:active { transform: scale(0.95); background: rgba(100,200,255,0.15); }
+        .btn-group button:active { transform: scale(0.95); background: rgba(100,200,255,0.12); }
         .btn-group button.reset { background: rgba(255,70,70,0.1); border-color: rgba(255,70,70,0.15); color: #ff6b6b; }
 
         #status {
@@ -117,20 +119,15 @@
             background: rgba(0,0,0,0.5);
             padding: 4px 16px;
             border-radius: 20px;
-            white-space: nowrap;
         }
 
         @media (max-width: 600px) {
-            #ui-panel {
-                right: 8px;
-                padding: 12px 10px;
-                min-width: 120px;
-                max-width: 150px;
-            }
-            .param-row { font-size: 11px; }
-            .param-row .value { width: 34px; font-size: 11px; }
-            .param-row .ctrl button { width: 22px; height: 22px; font-size: 14px; }
-            .param-row .label { width: 22px; }
+            #ui-panel { right: 6px; padding: 10px 8px; min-width: 120px; max-width: 140px; }
+            .param-row { font-size: 10px; }
+            .param-row .value { width: 30px; font-size: 10px; }
+            .param-row .ctrl button { width: 20px; height: 20px; font-size: 13px; }
+            .param-row .label { width: 14px; font-size: 10px; }
+            #ui-panel .section-title { font-size: 9px; }
         }
     </style>
 </head>
@@ -141,32 +138,17 @@
 
     <!-- Панель управления -->
     <div id="ui-panel">
-        <div class="title">🎨 Причёска</div>
+        <div class="section-title">📏 Масштаб</div>
+        <div class="param-row">
+            <span class="label">S</span>
+            <div class="ctrl">
+                <button class="minus" data-param="sc" data-dir="-1">−</button>
+                <span class="value" id="sc-val">1.00</span>
+                <button class="plus" data-param="sc" data-dir="1">+</button>
+            </div>
+        </div>
 
-        <div class="param-row">
-            <span class="label">X</span>
-            <div class="ctrl">
-                <button class="minus" data-param="px" data-dir="-1">−</button>
-                <span class="value" id="px-val">0.000</span>
-                <button class="plus" data-param="px" data-dir="1">+</button>
-            </div>
-        </div>
-        <div class="param-row">
-            <span class="label">Y</span>
-            <div class="ctrl">
-                <button class="minus" data-param="py" data-dir="-1">−</button>
-                <span class="value" id="py-val">0.000</span>
-                <button class="plus" data-param="py" data-dir="1">+</button>
-            </div>
-        </div>
-        <div class="param-row">
-            <span class="label">Z</span>
-            <div class="ctrl">
-                <button class="minus" data-param="pz" data-dir="-1">−</button>
-                <span class="value" id="pz-val">0.000</span>
-                <button class="plus" data-param="pz" data-dir="1">+</button>
-            </div>
-        </div>
+        <div class="section-title">🔄 Вращение</div>
         <div class="param-row">
             <span class="label">RX</span>
             <div class="ctrl">
@@ -191,12 +173,30 @@
                 <button class="plus" data-param="rz" data-dir="1">+</button>
             </div>
         </div>
+
+        <div class="section-title">📍 Положение</div>
         <div class="param-row">
-            <span class="label">S</span>
+            <span class="label">X</span>
             <div class="ctrl">
-                <button class="minus" data-param="sc" data-dir="-1">−</button>
-                <span class="value" id="sc-val">1.00</span>
-                <button class="plus" data-param="sc" data-dir="1">+</button>
+                <button class="minus" data-param="px" data-dir="-1">−</button>
+                <span class="value" id="px-val">0.000</span>
+                <button class="plus" data-param="px" data-dir="1">+</button>
+            </div>
+        </div>
+        <div class="param-row">
+            <span class="label">Y</span>
+            <div class="ctrl">
+                <button class="minus" data-param="py" data-dir="-1">−</button>
+                <span class="value" id="py-val">0.000</span>
+                <button class="plus" data-param="py" data-dir="1">+</button>
+            </div>
+        </div>
+        <div class="param-row">
+            <span class="label">Z</span>
+            <div class="ctrl">
+                <button class="minus" data-param="pz" data-dir="-1">−</button>
+                <span class="value" id="pz-val">0.000</span>
+                <button class="plus" data-param="pz" data-dir="1">+</button>
             </div>
         </div>
 
@@ -223,10 +223,10 @@
         // ⚠️ ИЗМЕНИ ПУТИ К СВОИМ МОДЕЛЯМ
         // ============================================================
         const CHARACTER_PATH = 'womenmodel.glb';
-        const HAIR_PATH = 'hair1.glb';
+        const ITEM_PATH = 'hair1.glb';
 
         // ============================================================
-        // СЦЕНА, КАМЕРА, РЕНДЕРЕР
+        // СЦЕНА
         // ============================================================
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
@@ -272,8 +272,8 @@
         // ============================================================
         const loader = new GLTFLoader();
         let characterModel = null;
-        let hairModel = null;
-        let hairGroup = new THREE.Group();
+        let itemModel = null;
+        let itemGroup = new THREE.Group();
         let headSlot = null;
         const characterGroup = new THREE.Group();
         scene.add(characterGroup);
@@ -292,7 +292,7 @@
                     headSlot = child;
                 }
             });
-            if (hairModel) attachHair();
+            if (itemModel) attachItem();
             checkReady();
         }, undefined, (err) => {
             console.error('❌ Ошибка загрузки персонажа:', err);
@@ -300,34 +300,34 @@
             statusEl.style.color = '#ff6b6b';
         });
 
-        loader.load(HAIR_PATH, (gltf) => {
-            hairModel = gltf.scene;
-            // hairModel.scale.set(0.8, 0.8, 0.8); // подгони при необходимости
-            hairGroup.add(hairModel);
-            console.log('✅ Причёска загружена');
-            if (characterModel) attachHair();
+        loader.load(ITEM_PATH, (gltf) => {
+            itemModel = gltf.scene;
+            // itemModel.scale.set(0.8, 0.8, 0.8); // подгони при необходимости
+            itemGroup.add(itemModel);
+            console.log('✅ Предмет загружен');
+            if (characterModel) attachItem();
             checkReady();
         }, undefined, (err) => {
-            console.error('❌ Ошибка загрузки причёски:', err);
-            statusEl.textContent = '❌ Ошибка загрузки причёски';
+            console.error('❌ Ошибка загрузки предмета:', err);
+            statusEl.textContent = '❌ Ошибка загрузки предмета';
             statusEl.style.color = '#ff6b6b';
         });
 
-        function attachHair() {
-            if (!characterModel || !hairModel) return;
+        function attachItem() {
+            if (!characterModel || !itemModel) return;
             if (headSlot) {
-                headSlot.add(hairGroup);
-                console.log('✅ Причёска прикреплена к голове');
+                headSlot.add(itemGroup);
+                console.log('✅ Предмет прикреплён к голове');
             } else {
-                hairGroup.position.set(0, 1.8, 0);
-                characterModel.add(hairGroup);
+                itemGroup.position.set(0, 1.8, 0);
+                characterModel.add(itemGroup);
                 console.log('⚠️ Слот головы не найден, смещение Y=1.8');
             }
             applySettings();
         }
 
         function checkReady() {
-            if (characterModel && hairModel) {
+            if (characterModel && itemModel) {
                 statusEl.textContent = '✅ Модели загружены';
                 statusEl.style.color = '#6cf';
                 uiPanel.style.display = 'flex';
@@ -361,31 +361,31 @@
 
         function updateDisplay() {
             for (const key in paramState) {
-                displayEls[key].textContent = paramState[key].toFixed(key === 'sc' ? 2 : 3);
+                const val = paramState[key];
+                const fixed = key === 'sc' ? 2 : (key.startsWith('r') ? 2 : 3);
+                displayEls[key].textContent = val.toFixed(fixed);
             }
         }
 
         function applySettings() {
-            if (!hairGroup) return;
-            hairGroup.position.set(paramState.px, paramState.py, paramState.pz);
-            hairGroup.rotation.set(paramState.rx, paramState.ry, paramState.rz);
+            if (!itemGroup) return;
+            itemGroup.position.set(paramState.px, paramState.py, paramState.pz);
+            itemGroup.rotation.set(paramState.rx, paramState.ry, paramState.rz);
             const s = paramState.sc;
-            hairGroup.scale.set(s, s, s);
+            itemGroup.scale.set(s, s, s);
         }
 
         function changeParam(param, delta) {
             const step = steps[param] || 0.01;
             paramState[param] += delta * step;
-            // ограничения
+            // Ограничения
             if (param === 'sc') {
                 paramState.sc = Math.max(0.1, Math.min(3.0, paramState.sc));
-            } else if (param.startsWith('r')) {
-                // вращение не ограничиваем
-            } else {
-                // позиция
+            } else if (param.startsWith('p')) {
                 const limit = 1.0;
                 paramState[param] = Math.max(-limit, Math.min(limit, paramState[param]));
             }
+            // Вращение без ограничений
             updateDisplay();
             applySettings();
         }
@@ -426,12 +426,11 @@
         }
         animate();
 
-        // Инициализация дисплея
+        // Инициализация
         updateDisplay();
 
-        // Таймаут на случай, если модели не загрузились
         setTimeout(() => {
-            if (!characterModel || !hairModel) {
+            if (!characterModel || !itemModel) {
                 statusEl.textContent = '⚠️ Проверь пути к моделям';
                 statusEl.style.color = '#ffaa00';
             }
